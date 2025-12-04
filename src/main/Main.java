@@ -1,0 +1,6 @@
+public class Main {
+    public static void main(String[] args) {
+        ConsoleChess chess = new ConsoleChess(GameType.CLASSIC);
+        chess.startGame();
+    }
+}
