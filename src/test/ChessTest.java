@@ -1,3 +1,9 @@
+package test;
+
+import main.Game;
+import main.GameType;
+import main.Position;
+
 public class ChessTest {
     public static void main(String[] args) {
         System.out.println("\n=== ТЕСТИРОВАНИЕ Game.makeMove() ===");

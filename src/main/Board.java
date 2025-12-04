@@ -1,3 +1,4 @@
+package main;
 public class Board {
     private Piece[][] grid = new Piece[8][8];
     // Также нужно отметить: a1 -> [0][0], h8 -> [7][7]
