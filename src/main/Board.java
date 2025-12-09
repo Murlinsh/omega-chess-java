@@ -1,11 +1,19 @@
 package main;
+
 public class Board {
-    private Piece[][] grid = new Piece[8][8];
+    private Piece[][] grid;
+    private int BOARD_SIZE;
     // Также нужно отметить: a1 -> [0][0], h8 -> [7][7]
-    private Game game;
+    private final Game game;
 
     public Board(Game game) {
         this.game = game;
+        if (this.game.getGameType() == GameType.CLASSIC) {
+            this.BOARD_SIZE = 8;
+            this.grid = new Piece[8][8];
+        } else {
+
+        }
     }
 
     // Расстановка фигур на доску
@@ -84,11 +92,38 @@ public class Board {
             return false; // За пределами доски
         }
 
+        // Проверяем, разрешён ли такой ход для фигуры
         if (!piece.getPossibleMoves(this).contains(to)) {
             return false; // Фигура не может так ходить
         }
 
-        // Добавляем фигуру оппонента с клетки to в список съеденных фигур
+        // Проверка взятия на проходе
+        if (piece instanceof Pawn) {
+            Position enPassantTarget = game.getEnPassantTarget();
+            if (enPassantTarget != null && to.equals(enPassantTarget)) {
+                // 1. ВЫЧИСЛИТЬ позицию взятой пешки
+                int direction = (piece.getColor() == Color.WHITE) ? -1 : +1;
+                int capturedRow = to.getRow() + direction;
+                int capturedCol = to.getCol();
+                Position capturedPos = new Position(capturedRow, capturedCol);
+
+                // 2. НАЙТИ пешку на этой позиции
+                Piece capturedPiece = getPieceAt(capturedPos);
+
+                // 3. ЕСЛИ пешка существует:
+                if (capturedPiece != null && capturedPiece instanceof Pawn) {
+                    // - Добавить в capturedPieces
+                    game.capturePiece(capturedPiece);
+                    // - Удалить с доски
+                    setPieceAtInternal(null, capturedPos);
+                }
+
+                // 4. ОЧИСТИТЬ enPassantTarget
+                game.clearEnPassantTarget();
+            }
+        }
+
+        // Добавляем фигуру оппонента с клетки to в список съеденных фигур (обычное взятие)
         Piece target = this.getPieceAt(to);
         if (target != null) {
             game.capturePiece(target);
@@ -97,10 +132,26 @@ public class Board {
         // Очищаем старую клетку
         setPieceAtInternal(null, from);
 
-
-        // Отмечаем пешку как moved
+        // Отмечаем пешку как moved и устанавливаем enPassantTarget при двойном ходе
         if (piece instanceof Pawn) {
             ((Pawn) piece).markAsMoved();
+
+            // Проверка двойного хода для установки enPassantTarget
+            int rowDiff = Math.abs(to.getRow() - from.getRow());
+            int pawnInitialMaxSteps = game.getGameType().getPawnInitialMaxSteps();
+
+            if (rowDiff == pawnInitialMaxSteps) { // 2 для CLASSIC, 3 для OMEGA
+                // Устанавливаем позицию ЗА пешкой (поле, которое она проскочила)
+                int direction = (piece.getColor() == Color.WHITE) ? -1 : 1;
+                Position targetPos = new Position(to.getRow() + direction, to.getCol());
+                game.setEnPassantTarget(targetPos);
+            } else {
+                // Если не двойной ход - очищаем enPassantTarget
+                game.clearEnPassantTarget();
+            }
+        } else {
+            // Если ход не пешкой - очищаем enPassantTarget
+            game.clearEnPassantTarget();
         }
 
         // Ставим на новую клетку (затираем фигуру противника, если есть)
@@ -123,5 +174,13 @@ public class Board {
 
     public static boolean isDarkSquare(Position pos) {
         return !isLightSquare(pos);
+    }
+
+    public void replacePiece(Position pos, Piece newPiece) {
+        if (pos.isValid(BOARD_SIZE)) {
+            setPieceAtInternal(newPiece, pos);
+        } else {
+            throw new IllegalArgumentException("Некорректная позиция");
+        }
     }
 }

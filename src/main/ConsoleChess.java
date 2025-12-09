@@ -1,4 +1,6 @@
 package main;
+
+import java.util.List;
 import java.util.Scanner;
 
 public class ConsoleChess {
@@ -27,6 +29,11 @@ public class ConsoleChess {
             boolean success = game.makeMove(from, to);
             if (!success) {
                 System.out.println("Недопустимый ход! Попробуйте снова.");
+            } else {
+                if (game.getBoard().getPieceAt(to) instanceof Pawn
+                        && game.isPromotionPosition(to, game.getBoard().getPieceAt(to).getColor())) {
+                    game.promotePawn(to, askForPromotionChoice());
+                }
             }
         }
     }
@@ -100,6 +107,36 @@ public class ConsoleChess {
         // В твоей системе a1=[0][0], так что row=rank-1
         return new Position(row, col);
     }
+
+    public Class<? extends Piece> askForPromotionChoice() {
+        boolean notOK = true;
+        while (notOK) {
+            // Показать варианты: "Q - Ферзь, R - Ладья..."
+            System.out.println("Выберите фигуру для превращения:");
+            if (game.getGameType() == GameType.CLASSIC) {
+                System.out.println("Q - Queen, R - Rook, B - Bishop, N - Knight");
+            } else {
+                System.out.println("Q - Queen, R - Rook, B - Bishop, N - Knight, C - Champion, W - Wizard");
+            }
+
+            // Получить ввод игрока
+            String input = scanner.nextLine().toUpperCase();
+            // Вернуть выбранный Class (Queen.class, Rook.class...)
+            if (input.equals("Q")) {
+                return Queen.class;
+            } else if (input.equals("R")) {
+                return Rook.class;
+            } else if (input.equals("B")) {
+                return Bishop.class;
+            } else if (input.equals("N")) {
+                return Knight.class;
+            } else {
+                System.out.println("Некорректная буква.");
+            }
+        }
+        return null;
+    }
+
 
     private void printResult() {
         // Объявление победителя

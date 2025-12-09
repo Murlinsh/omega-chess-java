@@ -1,4 +1,5 @@
 package main;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -166,6 +167,22 @@ public class MoveCalculator {
             Piece targetForwardLeft = board.getPieceAt(forwardLeft);
             if (pawn.isOpponent(targetForwardLeft)) {
                 moves.add(forwardLeft);
+            }
+        }
+
+        // ВЗЯТИЕ НА ПРОХОДЕ
+        if ((pawn.getColor() == Color.WHITE && pawn.getPosition().getRow() == 4)
+                || (pawn.getColor() == Color.BLACK && pawn.getPosition().getRow() == 3)) {
+
+            Position enPassantTarget = board.getGame().getEnPassantTarget();
+            if (enPassantTarget != null) {
+                // Проверка, что цель на проходе на соседней вертикали
+                int pawnCol = pawn.getPosition().getCol();
+                int targetCol = enPassantTarget.getCol();
+
+                if (Math.abs(pawnCol - targetCol) == 1) {  // Соседняя вертикаль
+                    moves.add(enPassantTarget);
+                }
             }
         }
 
