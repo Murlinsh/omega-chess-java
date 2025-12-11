@@ -1,5 +1,7 @@
 package main;
 
+import javafx.scene.control.Alert;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -131,25 +133,64 @@ public class Board {
         return null;
     }
 
+    //    public boolean hasLegalMoves(Color color) {
+//        for (int row = 0; row < BOARD_SIZE; row++) {
+//            for (int col = 0; col < BOARD_SIZE; col++) {
+//                Position from = new Position(row, col);
+//                Piece piece = getPieceAt(from);
+//
+//                if (piece != null && piece.getColor() == color) {
+//                    List<Position> moves = piece.getPossibleMoves(this);
+//
+//                    for (Position to : moves) {
+//                        if (isMoveLegal(from, to, color)) {
+//                            return true;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return false;
+//    }
     public boolean hasLegalMoves(Color color) {
+        System.out.println("\n=== Проверка hasLegalMoves для " + color + " ===");
+
+        int piecesChecked = 0;
+        int totalMoves = 0;
+
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 Position from = new Position(row, col);
                 Piece piece = getPieceAt(from);
 
                 if (piece != null && piece.getColor() == color) {
+                    piecesChecked++;
+                    System.out.println("  Фигура " + piece.getClass().getSimpleName() +
+                            " на " + from + " (" + row + "," + col + ")");
+
                     List<Position> moves = piece.getPossibleMoves(this);
+                    System.out.println("    Возможных ходов: " + moves.size());
+                    totalMoves += moves.size();
 
                     for (Position to : moves) {
-                        if (isMoveLegal(from, to, color)) {
+                        boolean legal = isMoveLegal(from, to, color);
+                        System.out.println("      " + from + " → " + to + " : " +
+                                (legal ? "ЛЕГАЛЬНЫЙ" : "нелегальный"));
+                        if (legal) {
+                            System.out.println("=== Найден легальный ход, возвращаем true ===");
                             return true;
                         }
                     }
                 }
             }
         }
+
+        System.out.println("Итог: " + piecesChecked + " фигур, " +
+                totalMoves + " возможных ходов, легальных: 0");
+        System.out.println("=== Возвращаем false ===");
         return false;
     }
+
 
     public boolean isMoveLegal(Position from, Position to, Color movingColor) {
         // Базовые проверки

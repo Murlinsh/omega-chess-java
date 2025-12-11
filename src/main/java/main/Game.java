@@ -9,6 +9,7 @@ public class Game {
     private Board board;
     private Color currentPlayer;
     private boolean isGameOver;
+    private int moveCount;
 
     private List<Piece> capturedWhitePieces = new ArrayList<>();
     private List<Piece> capturedBlackPieces = new ArrayList<>();
@@ -19,6 +20,7 @@ public class Game {
         this.board = new Board(this);
         this.currentPlayer = Color.WHITE;
         this.enPassantTarget = null;
+        this.moveCount = 0;
         this.board.initializePieces();
     }
 
@@ -40,44 +42,37 @@ public class Game {
     }
 
     public boolean makeMove(Position from, Position to) {
-        if (isGameOver) {
-            System.out.println("Игра завершена");
+        if (isGameOver()) {
             return false;
         }
 
         Piece piece = board.getPieceAt(from);
         if (piece == null) {
-            System.out.println("Клетка пустая");
             return false;
         }
 
         if (piece.getColor() != currentPlayer) {
-            System.out.println("Сейчас не ваш ход");
             return false;
         }
 
         boolean makeSuccessful = board.movePiece(from, to);
         if (makeSuccessful) {
-            // Проверяем конечные состояния игры
-            Color opponent = currentPlayer.opposite();
-            if (board.isCheckmate(opponent)) {
-                System.out.println("МАТ! Победили " + currentPlayer);
-                isGameOver = true;
-            } else if (board.isStalemate(opponent)) {
-                System.out.println("ПАТ! Ничья");
-                isGameOver = true;
-            } else if (board.isKingInCheck(opponent)) {
-                System.out.println("ШАХ!");
+            moveCount++;
+
+            // Меняем игрока
+            currentPlayer = currentPlayer.opposite();
+
+            // Только шах можно проверить (для логирования)
+            if (board.isKingInCheck(currentPlayer)) {
+                System.out.println("ШАХ королю " + currentPlayer);
             }
 
-            currentPlayer = opponent;
-            System.out.println("Ход выполнен. Теперь ходит: " + currentPlayer);
             return true;
         } else {
-            System.out.println("Недопустимый ход");
             return false;
         }
     }
+
 
     public boolean undoLastMove() {
         if (isGameOver) {
@@ -87,14 +82,15 @@ public class Game {
 
         boolean success = board.undoLastMove();
         if (success) {
+            moveCount = Math.max(0, moveCount - 1); // Уменьшаем счетчик ходов
             // Сменить игрока обратно
             currentPlayer = currentPlayer.opposite();
             System.out.println("Ход отменен. Теперь ходит: " + currentPlayer);
+            return true;
         } else {
             System.out.println("Нельзя отменить ход (история пуста)");
+            return false;
         }
-
-        return success;
     }
 
     public void promotePawn(Position pos, Class<? extends Piece> newPieceType) {
@@ -195,6 +191,20 @@ public class Game {
         return capturedBlackPieces;
     }
 
+    public void setGameOver(boolean gameOver) {
+        this.isGameOver = gameOver;
+    }
+
+    public void declareMate(Color winner) {
+        this.isGameOver = true;
+        System.out.println("МАТ! Победили " + (winner == Color.WHITE ? "белые" : "черные"));
+    }
+
+    public void declareStalemate() {
+        this.isGameOver = true;
+        System.out.println("ПАТ! Ничья");
+    }
+
     // Метод для получения текущего состояния игры (для сохранения)
     public GameState getCurrentState() {
         // TODO: Реализовать создание GameState
@@ -239,8 +249,7 @@ public class Game {
 
     // Метод для получения количества ходов в игре
     public int getMoveCount() {
-        // TODO: Реализовать подсчет ходов
-        return 0;
+        return this.moveCount;
     }
 
     // Метод для проверки возможности рокировки
@@ -312,6 +321,7 @@ public class Game {
         System.out.println("Счет материала: " + evaluatePosition() + " (положительное - преимущество белых)");
         System.out.println("Снятые белые фигуры: " + capturedWhitePieces.size());
         System.out.println("Снятые черные фигуры: " + capturedBlackPieces.size());
+        System.out.println("Количество ходов: " + getMoveCount()); // ← ЭТУ СТРОКУ ДОБАВЬ
         System.out.println("Можно ли белым сделать рокировку O-O: " + canCastle(Color.WHITE, true));
         System.out.println("Можно ли белым сделать рокировку O-O-O: " + canCastle(Color.WHITE, false));
         System.out.println("Можно ли черным сделать рокировку O-O: " + canCastle(Color.BLACK, true));

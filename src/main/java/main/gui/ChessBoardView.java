@@ -5,7 +5,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.paint.Color;
+import javafx.scene.control.Alert;
 import main.*;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,8 @@ public class ChessBoardView {
     private Position selectedPosition = null;
     private List<Position> possibleMoves = null;
 
+    private boolean isProcessingClick = false; // Флаг для предотвращения двойной обработки
+
     public ChessBoardView(Game game, ChessApp app) {
         this.game = game;
         this.app = app;
@@ -46,11 +50,9 @@ public class ChessBoardView {
         app.log("=== Инициализация доски ===");
 
         for (int gridRow = 0; gridRow < BOARD_SIZE; gridRow++) {
-            final int currentGridRow = gridRow;
             final int chessRow = 7 - gridRow;
 
             for (int col = 0; col < BOARD_SIZE; col++) {
-                final int currentCol = col;
                 Position pos = new Position(chessRow, col);
 
                 Rectangle square = new Rectangle(SQUARE_SIZE, SQUARE_SIZE);
@@ -59,19 +61,41 @@ public class ChessBoardView {
                 square.setFill(Board.isLightSquare(pos)
                         ? LIGHT_SQUARE_COLOR
                         : DARK_SQUARE_COLOR);
-                square.setStroke(Color.rgb(93, 64, 55)); // Темно-коричневая обводка
+                square.setStroke(Color.rgb(93, 64, 55));
                 square.setStrokeWidth(1);
 
                 StackPane cellStack = new StackPane();
                 cellStack.getChildren().add(square);
                 cellStack.setPrefSize(SQUARE_SIZE, SQUARE_SIZE);
 
+                // Создаем отдельный контейнер для фигур
+                StackPane pieceContainer = new StackPane();
+                pieceContainer.setPrefSize(SQUARE_SIZE, SQUARE_SIZE);
+                pieceContainer.setMouseTransparent(true); // Фигуры не обрабатывают клики
+                cellStack.getChildren().add(pieceContainer);
+
+                // Обработчик клика только на клетке
                 final Position cellPos = pos;
                 cellStack.setOnMouseClicked(e -> {
-                    app.log("Клик по клетке: " + positionToChessNotation(cellPos) +
-                            " (Grid: " + currentGridRow + "," + currentCol +
-                            ", Chess: " + chessRow + "," + currentCol + ")");
-                    handleSquareClick(cellPos);
+                    // Обрабатываем только если не в процессе обработки
+                    if (!isProcessingClick) {
+                        isProcessingClick = true;
+                        try {
+                            handleSquareClick(cellPos);
+                        } finally {
+                            // Задержка перед сбросом флага
+                            new Thread(() -> {
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException ex) {
+                                    Thread.currentThread().interrupt();
+                                }
+                                javafx.application.Platform.runLater(() -> {
+                                    isProcessingClick = false;
+                                });
+                            }).start();
+                        }
+                    }
                 });
 
                 grid.add(cellStack, col, gridRow);
@@ -109,78 +133,138 @@ public class ChessBoardView {
     }
 
     private void handleSquareClick(Position position) {
-        if (game == null || app == null) return;
+        if (game == null || app == null || game.isGameOver()) {
+            return;
+        }
 
-        app.log("=== ОБРАБОТКА КЛИКА ===");
-        app.log("Позиция: " + positionToChessNotation(position) +
-                " (row=" + position.getRow() + ", col=" + position.getCol() + ")");
+        app.log("Клик: " + positionToChessNotation(position));
 
         Piece piece = game.getBoard().getPieceAt(position);
-
-        if (piece == null) {
-            app.log("На этой позиции нет фигуры");
-        } else {
-            app.log("На позиции: " + piece.getClass().getSimpleName() +
-                    ", цвет: " + piece.getColor() +
-                    ", текущий игрок: " + game.getCurrentPlayer());
-        }
 
         if (selectedPosition == null) {
             if (piece != null && piece.getColor() == game.getCurrentPlayer()) {
                 selectedPosition = position;
-
-                // Получаем возможные ходы
                 possibleMoves = piece.getPossibleMoves(game.getBoard());
-
-                // ФИЛЬТРУЕМ: убираем ходы, которые оставляют короля под шахом
                 possibleMoves.removeIf(move -> !game.getBoard().isMoveLegal(position, move, piece.getColor()));
 
-                app.log("Выбрана " + getPieceName(piece) +
-                        " на " + positionToChessNotation(position));
-                app.log("Количество возможных ходов (после фильтрации шаха): " + possibleMoves.size());
-
-                for (Position move : possibleMoves) {
-                    Piece target = game.getBoard().getPieceAt(move);
-                    app.log("  → " + positionToChessNotation(move) +
-                            (target != null ? " (взятие " + getPieceName(target) + ")" : ""));
-                }
+                app.log("Выбрана " + getPieceName(piece) + " на " + positionToChessNotation(position));
 
                 highlightSquare(position);
                 highlightPossibleMoves();
-            } else if (piece != null) {
-                app.log("Это фигура противника!");
-            } else {
-                app.log("Пустая клетка");
             }
         } else {
             if (possibleMoves != null && possibleMoves.contains(position)) {
-                app.log("Выполняем ход с " + positionToChessNotation(selectedPosition) +
-                        " на " + positionToChessNotation(position));
+                app.log("Ход: " + positionToChessNotation(selectedPosition) + " → " + positionToChessNotation(position));
 
+                // Запоминаем, КТО сейчас ходит (перед выполнением хода)
+                main.Color currentPlayerBeforeMove = game.getCurrentPlayer();
+
+                // Выполняем ход
                 app.makeMove(selectedPosition, position);
 
                 clearHighlights();
                 selectedPosition = null;
                 possibleMoves = null;
 
-            } else if (piece != null && piece.getColor() == game.getCurrentPlayer()) {
-                app.log("Выбрана новая фигура: " + getPieceName(piece));
-                clearHighlights();
-                selectedPosition = position;
-                possibleMoves = piece.getPossibleMoves(game.getBoard());
+                // После makeMove() currentPlayer уже стал ПРОТИВНИКОМ
+                // Проверяем игрока, который должен ходить СЕЙЧАС
+                main.Color playerToCheck = game.getCurrentPlayer();
+                checkForGameEnd(playerToCheck, currentPlayerBeforeMove);
 
-                // ФИЛЬТРУЕМ: убираем ходы, которые оставляют короля под шахом
-                possibleMoves.removeIf(move -> !game.getBoard().isMoveLegal(position, move, piece.getColor()));
-
-                highlightSquare(position);
-                highlightPossibleMoves();
             } else {
-                app.log("Отмена выбора фигуры");
+                app.log("Отмена выбора");
                 clearHighlights();
                 selectedPosition = null;
                 possibleMoves = null;
             }
         }
+    }
+
+    private void checkForGameEnd(main.Color playerToCheck, main.Color opponent) {
+        Board board = game.getBoard();
+
+        // Проверяем, есть ли у игрока легальные ходы
+        boolean hasLegalMoves = board.hasLegalMoves(playerToCheck);
+        boolean kingInCheck = board.isKingInCheck(playerToCheck);
+
+        if (!hasLegalMoves) {
+            if (kingInCheck) {
+                // МАТ для playerToCheck
+                app.log("МАТ! Король " + (playerToCheck == main.Color.WHITE ? "белых" : "чёрных") +
+                        " под шахом без легальных ходов");
+                game.declareMate(opponent);
+
+                showMateDialog(playerToCheck);
+            } else {
+                // ПАТ для playerToCheck
+                app.log("ПАТ! У " + (playerToCheck == main.Color.WHITE ? "белых" : "чёрных") +
+                        " нет легальных ходов, но король не под шахом");
+                game.declareStalemate();
+
+                showStalemateDialog();
+            }
+        } else if (kingInCheck) {
+            // Просто шах (но не мат)
+            app.log("ШАХ королю " + (playerToCheck == main.Color.WHITE ? "белых" : "чёрных"));
+        }
+    }
+
+    // Метод для проверки окончания игры
+    private void checkForGameEnd(main.Color playerToCheck) {
+        Board board = game.getBoard();
+
+        // Проверяем, есть ли у игрока легальные ходы
+        boolean hasLegalMoves = board.hasLegalMoves(playerToCheck);
+        boolean kingInCheck = board.isKingInCheck(playerToCheck);
+
+        if (!hasLegalMoves) {
+            if (kingInCheck) {
+                // МАТ для игрока playerToCheck
+                app.log("МАТ! Король " + (playerToCheck == main.Color.WHITE ? "белых" : "чёрных") + " под шахом без легальных ходов");
+                game.declareMate(playerToCheck.opposite());
+
+                // Показать диалог мата
+                showMateDialog(playerToCheck);
+            } else {
+                // ПАТ для игрока playerToCheck
+                app.log("ПАТ! У " + (playerToCheck == main.Color.WHITE ? "белых" : "чёрных") + " нет легальных ходов, но король не под шахом");
+                game.declareStalemate();
+
+                // Показать диалог пата
+                showStalemateDialog();
+            }
+        } else if (kingInCheck) {
+            // Просто шах (но не мат)
+            app.log("ШАХ королю " + (playerToCheck == main.Color.WHITE ? "белых" : "чёрных"));
+        }
+    }
+
+    private void showMateDialog(main.Color loser) {
+        javafx.application.Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Игра завершена");
+            alert.setHeaderText("ШАХ И МАТ!");
+            alert.setContentText("🎉 ПОБЕДА " +
+                    (loser.opposite() == main.Color.WHITE ? "БЕЛЫХ" : "ЧЁРНЫХ") + "!\n\n" +
+                    "♚ Король " + (loser == main.Color.WHITE ? "белых" : "чёрных") + " под матом\n" +
+                    "⏱ Игра длилась: " + game.getMoveCount() + " ходов");
+            alert.show();
+        });
+    }
+
+    private void showStalemateDialog() {
+        javafx.application.Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Игра завершена");
+            alert.setHeaderText("ПАТ - НИЧЬЯ!");
+            alert.setContentText(
+                    "⚖️ ИГРА ЗАВЕРШИЛАСЬ ВНИЧЬЮ\n\n" +
+                            "🔒 Нет легальных ходов\n" +
+                            "♔ Король не под шахом\n" +
+                            "⏱ Игра длилась: " + game.getMoveCount() + " ходов"
+            );
+            alert.show();
+        });
     }
 
     private void highlightSquare(Position position) {
@@ -230,7 +314,8 @@ public class ChessBoardView {
     }
 
     public void drawBoard() {
-        app.log("=== ОТРИСОВКА ФИГУР ===");
+        // Убираем логи из этого метода, чтобы не дублировать
+        // app.log("=== ОТРИСОВКА ФИГУР ===");
 
         // 1. Полностью очищаем ВСЕ фигуры со ВСЕХ клеток
         for (StackPane cell : cells.values()) {
@@ -256,8 +341,9 @@ public class ChessBoardView {
                         pieceViews.put(pos, pieceView);
                         cell.getChildren().add(pieceView.getView());
 
-                        app.log("Добавлена фигура: " + piece.getClass().getSimpleName() +
-                                " на " + positionToChessNotation(pos));
+                        // Комментируем лог, чтобы не засорять консоль
+                        // app.log("Добавлена фигура: " + piece.getClass().getSimpleName() +
+                        //         " на " + positionToChessNotation(pos));
                     } else {
                         app.log("ERROR: Не найдена клетка для " + positionToChessNotation(pos));
                     }
@@ -265,7 +351,7 @@ public class ChessBoardView {
             }
         }
 
-        app.log("=== ФИГУРЫ ОТРИСОВАНЫ ===");
+        // app.log("=== ФИГУРЫ ОТРИСОВАНЫ ===");
     }
 
     private Position findPositionByPieceView(PieceView pieceView) {

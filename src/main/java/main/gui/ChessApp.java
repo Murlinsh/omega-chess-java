@@ -186,11 +186,11 @@ public class ChessApp extends Application {
             return;
         }
 
-        log("Попытка хода с " + positionToString(from) + " на " + positionToString(to));
+        // Только один лог вместо дублирования
+        log("Выполнение хода: " + positionToString(from) + " → " + positionToString(to));
 
         boolean success = game.makeMove(from, to);
         if (success) {
-            log("Ход выполнен успешно");
             boardView.drawBoard();
             infoPanel.updateInfo();
 
@@ -202,8 +202,6 @@ public class ChessApp extends Application {
 
             // Проверяем конечные состояния
             checkGameStatus();
-        } else {
-            log("Ход не удался - недопустимый ход");
         }
     }
 
@@ -215,21 +213,28 @@ public class ChessApp extends Application {
     }
 
     private void checkGameStatus() {
-        if (game == null) return;
+        if (game == null || game.isGameOver()) return;
 
-        Color opponent = game.getCurrentPlayer().opposite();
+        // Игрок, который должен ходить СЕЙЧАС (после смены хода)
+        Color playerToMove = game.getCurrentPlayer();
 
-        if (game.getBoard().isCheckmate(opponent)) {
-            log("МАТ! Победили " + game.getCurrentPlayer());
+        if (game.getBoard().isCheckmate(playerToMove)) {
+            // Игрок, который должен ходить, под матом
+            Color winner = playerToMove.opposite(); // Тот, кто только что сходил
+
+            log("МАТ! Победили " + winner);
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Игра завершена");
             alert.setHeaderText("МАТ!");
             alert.setContentText("Победили " +
-                    (game.getCurrentPlayer() == Color.WHITE ? "белые" : "черные") + "!");
+                    (winner == Color.WHITE ? "белые" : "черные") + "!");
             alert.show();
 
-        } else if (game.getBoard().isStalemate(opponent)) {
+            game.declareMate(winner);
+
+        } else if (game.getBoard().isStalemate(playerToMove)) {
+            // Игрок, который должен ходить, в пате
             log("ПАТ! Ничья");
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -237,6 +242,8 @@ public class ChessApp extends Application {
             alert.setHeaderText("ПАТ!");
             alert.setContentText("Ничья!");
             alert.show();
+
+            game.declareStalemate();
         }
     }
 
