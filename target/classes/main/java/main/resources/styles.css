@@ -1,0 +1,110 @@
+/* Основные стили приложения */
+.root {
+    -fx-font-family: "Arial";
+}
+
+/* Стили для кнопок */
+.button {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 15;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-opacity: 0.9;
+}
+
+/* Специальные кнопки */
+.new-game-button {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+}
+
+.undo-button {
+    -fx-background-color: #2ecc71;
+    -fx-text-fill: white;
+}
+
+.surrender-button {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+}
+
+/* Стили для меток */
+.label {
+    -fx-font-size: 14px;
+}
+
+.title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+/* Стили для панели информации */
+.info-panel {
+    -fx-background-color: linear-gradient(to bottom, #34495e, #2c3e50);
+    -fx-padding: 15;
+    -fx-spacing: 10;
+}
+
+/* Стили для доски */
+.board-square {
+    -fx-stroke: #5d4037;
+    -fx-stroke-width: 1;
+}
+
+.light-square {
+    -fx-fill: #f0d9b5; /* Классический бежевый цвет светлых клеток */
+}
+
+.dark-square {
+    -fx-fill: #b58863; /* Классический коричневый цвет темных клеток */
+}
+
+.selected-square {
+    -fx-fill: #ffeb3b;
+}
+
+.possible-move {
+    -fx-fill: rgba(129, 199, 132, 0.7); /* Полупрозрачный зеленый */
+}
+
+.possible-capture {
+    -fx-fill: rgba(239, 83, 80, 0.7); /* Полупрозрачный красный */
+}
+
+/* Стили для фигур */
+.piece-text {
+    -fx-font-family: "Segoe UI Symbol";
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 3, 0, 0, 1);
+}
+
+/* Дополнительные классы для цветов фигур */
+.white-piece {
+    -fx-fill: #ffffff; /* Чистый белый для контраста */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 4, 0, 0, 2);
+}
+
+.black-piece {
+    -fx-fill: #2c3e50; /* Темно-синий/серый вместо чистого черного */
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.7), 4, 0, 0, 2);
+}
+
+/* Стили для координат доски */
+.board-coordinate {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.board-coordinate-top {
+    -fx-fill: #f0d9b5; /* Цвет как у светлых клеток */
+}
+
+.board-coordinate-bottom {
+    -fx-fill: #b58863; /* Цвет как у темных клеток */
+}

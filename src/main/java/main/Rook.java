@@ -1,16 +1,15 @@
 package main;
-import java.util.ArrayList;
 import java.util.List;
 
-public class Pawn extends Piece {
-    private boolean hasMoved = false;
-
-    public Pawn(Color color, Position startPosition) {
+public class Rook extends Piece {
+    private boolean hasMoved;
+    public Rook(Color color, Position startPosition) {
         super(color, startPosition);
+        this.hasMoved = false;
     }
 
     public List<Position> getPossibleMoves(Board board) {
-        return MoveCalculator.getPawnMoves(this, board);
+        return MoveCalculator.getRookMoves(this, board);
     }
 
     // Метод для обновления состояния после хода
@@ -20,5 +19,9 @@ public class Pawn extends Piece {
 
     public boolean hasMoved() {
         return hasMoved;
+    }
+
+    public void resetMoved() {
+        hasMoved = false;
     }
 }

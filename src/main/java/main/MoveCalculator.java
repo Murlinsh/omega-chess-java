@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MoveCalculator {
-    private static final int BOARD_SIZE = 8;
+    static final int BOARD_SIZE = 8;
 
     private static boolean processMove(Piece piece, Board board,
                                        List<Position> moves, int row, int col) {
@@ -133,7 +133,6 @@ public class MoveCalculator {
         for (int i = 1; i <= X; i++) {
             Position forward_X = new Position(pawn.getPosition().getRow() + (i * offset_forward), pawn.getPosition().getCol());
             if (!forward_X.isValid(BOARD_SIZE)) {
-                //changePawnToOther();
                 break; // Некорректная позиция
             }
             Piece target = board.getPieceAt(forward_X);
@@ -183,6 +182,37 @@ public class MoveCalculator {
                 if (Math.abs(pawnCol - targetCol) == 1) {  // Соседняя вертикаль
                     moves.add(enPassantTarget);
                 }
+            }
+        }
+
+        return moves;
+    }
+
+    public static List<Position> getAllKingMoves(King king, Board board) {
+        List<Position> allMoves = new ArrayList<>();
+
+        // 1. Добавить обычные ходы
+        allMoves.addAll(getKingMoves(king, board));
+
+        // 2. Добавить рокировки
+        List<CastlingInfo> possibleCastlings = getPossibleCastlings(king, board);
+        for (CastlingInfo castling : possibleCastlings) {
+            allMoves.add(castling.kingTo);
+        }
+
+        return allMoves;
+    }
+
+    public static List<CastlingInfo> getPossibleCastlings(King king, Board board) {
+        List<CastlingInfo> moves = new ArrayList<>();
+
+        // Получаем ВСЕ классические рокировки
+        List<CastlingInfo> allClassic = CastlingInfo.getAllClassic();
+
+        // Фильтруем по цвету короля и проверяем валидность
+        for (CastlingInfo castling : allClassic) {
+            if (castling.color == king.getColor() && castling.isValid(board)) {
+                moves.add(castling);
             }
         }
 

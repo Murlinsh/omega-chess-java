@@ -14,17 +14,39 @@ public class ConsoleChess {
 
     public void startGame() {
         System.out.println("=== ШАХМАТЫ ===");
-        System.out.println("Команды: 'сдаюсь' - завершить игру");
+        System.out.println("Команды: 'сдаюсь' - завершить игру, 'отмена' - отменить последний ход");
 
         while (!game.isGameOver()) {
             printBoard();
             printGameInfo();
 
-            Position from = readPosition("Откуда (например, e2): ");
-            if (from == null) break; // Игрок сдался
+            String fromInput = readInput("Откуда (например, e2): ");
+            if (fromInput == null) break;
 
-            Position to = readPosition("Куда (например, e4): ");
-            if (to == null) break; // Игрок сдался
+            if (fromInput.equals("отмена")) {
+                game.undoLastMove();
+                continue;
+            }
+
+            Position from = parsePosition(fromInput);
+            if (from == null) {
+                System.out.println("Некорректный ввод. Формат: e2, a4 (a-h, 1-8) или 'отмена'");
+                continue;
+            }
+
+            String toInput = readInput("Куда (например, e4): ");
+            if (toInput == null) break;
+
+            if (toInput.equals("отмена")) {
+                game.undoLastMove();
+                continue;
+            }
+
+            Position to = parsePosition(toInput);
+            if (to == null) {
+                System.out.println("Некорректный ввод. Формат: e2, a4 (a-h, 1-8) или 'отмена'");
+                continue;
+            }
 
             boolean success = game.makeMove(from, to);
             if (!success) {
@@ -38,10 +60,22 @@ public class ConsoleChess {
         }
     }
 
+    private String readInput(String prompt) {
+        System.out.print(prompt);
+        String input = scanner.nextLine().trim().toLowerCase();
+
+        if (input.equals("сдаюсь")) {
+            game.surrender();
+            return null;
+        }
+
+        return input;
+    }
+
     private void printBoard() {
         System.out.println("\n   a b c d e f g h");
 
-        for (int row = 7; row >= 0; row--) { // от 8-го ряда к 1-му
+        for (int row = 7; row >= 0; row--) {
             System.out.print((row + 1) + "  ");
 
             for (int col = 0; col < 8; col++) {
@@ -67,7 +101,6 @@ public class ConsoleChess {
         else if (piece instanceof Knight) baseSymbol = 'N';
         else baseSymbol = 'P';
 
-        // Белые = заглавные, чёрные = строчные
         return (piece.getColor() == Color.WHITE) ? baseSymbol : Character.toLowerCase(baseSymbol);
     }
 
@@ -77,41 +110,23 @@ public class ConsoleChess {
         System.out.println("Ходят: " + (game.getCurrentPlayer() == Color.WHITE ? "БЕЛЫЕ" : "ЧЁРНЫЕ"));
     }
 
-    private Position readPosition(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            String input = scanner.nextLine().trim().toLowerCase();
-
-            if (input.equals("сдаюсь")) {
-                game.surrender();
-                return null;
-            }
-
-            Position pos = parsePosition(input);
-            if (pos != null && pos.isValid(8)) {
-                return pos;
-            }
-            System.out.println("Некорректный ввод. Формат: e2, a4 (a-h, 1-8)");
-        }
-    }
-
     private Position parsePosition(String input) {
         if (input.length() != 2) return null;
 
-        char file = input.charAt(0); // 'a'-'h'
-        char rank = input.charAt(1); // '1'-'8'
+        char file = input.charAt(0);
+        char rank = input.charAt(1);
 
-        int col = file - 'a'; // a=0, b=1, ..., h=7
-        int row = rank - '1'; // 1=0, 2=1, ..., 8=7
+        if (file < 'a' || file > 'h') return null;
+        if (rank < '1' || rank > '8') return null;
 
-        // В твоей системе a1=[0][0], так что row=rank-1
+        int col = file - 'a';
+        int row = rank - '1';
+
         return new Position(row, col);
     }
 
     public Class<? extends Piece> askForPromotionChoice() {
-        boolean notOK = true;
-        while (notOK) {
-            // Показать варианты: "Q - Ферзь, R - Ладья..."
+        while (true) {
             System.out.println("Выберите фигуру для превращения:");
             if (game.getGameType() == GameType.CLASSIC) {
                 System.out.println("Q - Queen, R - Rook, B - Bishop, N - Knight");
@@ -119,9 +134,7 @@ public class ConsoleChess {
                 System.out.println("Q - Queen, R - Rook, B - Bishop, N - Knight, C - Champion, W - Wizard");
             }
 
-            // Получить ввод игрока
             String input = scanner.nextLine().toUpperCase();
-            // Вернуть выбранный Class (Queen.class, Rook.class...)
             if (input.equals("Q")) {
                 return Queen.class;
             } else if (input.equals("R")) {
@@ -134,9 +147,7 @@ public class ConsoleChess {
                 System.out.println("Некорректная буква.");
             }
         }
-        return null;
     }
-
 
     private void printResult() {
         // Объявление победителя

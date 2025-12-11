@@ -26,5 +26,10 @@ public abstract class Piece {
         this.position = newPosition;
     }
 
-    abstract List<Position> getPossibleMoves(Board board);
+    public abstract List<Position> getPossibleMoves(Board board);
+
+    public List<Position> getAttackingSquares(Board board) {
+        // По умолчанию = возможные ходы
+        return getPossibleMoves(board);
+    }
 }
