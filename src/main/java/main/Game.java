@@ -1,5 +1,7 @@
 package main;
 
+import main.pieces.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -123,9 +125,8 @@ public class Game {
     }
 
     public boolean isPromotionPosition(Position pos, Color color) {
-        // Белая пешка на 8-м ряду (row == 7)
-        // Чёрная пешка на 1-м ряду (row == 0)
-        int promotionRow = (color == Color.WHITE) ? 7 : 0;
+        int boardSize = board.getGame().getGameType().getBoardSize(); // Получаем размер доски
+        int promotionRow = (color == Color.WHITE) ? (boardSize - 1) : 0;
         return pos.getRow() == promotionRow;
     }
 
@@ -223,9 +224,10 @@ public class Game {
         int rooks = 0;
         int bishops = 0;
         int knights = 0;
+        int boardSize = gameType.getBoardSize(); // Используем gameType
 
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
                 Piece piece = board.getPieceAt(new Position(row, col));
                 if (piece != null) {
                     totalPieces++;
@@ -272,8 +274,9 @@ public class Game {
     }
 
     private King findKing(Color color) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        int boardSize = gameType.getBoardSize(); // Используем gameType
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
                 Piece piece = board.getPieceAt(new Position(row, col));
                 if (piece instanceof King && piece.getColor() == color) {
                     return (King) piece;
@@ -286,9 +289,10 @@ public class Game {
     // Метод для получения оценки позиции (очень упрощенная)
     public int evaluatePosition() {
         int score = 0;
+        int boardSize = gameType.getBoardSize(); // Используем gameType
 
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
                 Piece piece = board.getPieceAt(new Position(row, col));
                 if (piece != null) {
                     int pieceValue = getPieceValue(piece);

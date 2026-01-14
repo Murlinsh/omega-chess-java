@@ -1,4 +1,8 @@
-package main;
+package main.pieces;
+import main.Board;
+import main.Color;
+import main.Position;
+
 import java.util.List;
 
 public abstract class Piece {

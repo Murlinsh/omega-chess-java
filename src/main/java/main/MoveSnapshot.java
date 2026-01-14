@@ -1,7 +1,6 @@
 package main;
 
-import java.util.ArrayList;
-import java.util.List;
+import main.pieces.Piece;
 
 public class MoveSnapshot {
     public final Piece movedPiece;

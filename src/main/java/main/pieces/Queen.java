@@ -1,4 +1,9 @@
-package main;
+package main.pieces;
+
+import main.Board;
+import main.Color;
+import main.MoveCalculator;
+import main.Position;
 
 import java.util.ArrayList;
 import java.util.List;

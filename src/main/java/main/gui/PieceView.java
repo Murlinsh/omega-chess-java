@@ -5,13 +5,13 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.effect.DropShadow;
-import main.Piece;
-import main.King;
-import main.Queen;
-import main.Rook;
-import main.Bishop;
-import main.Knight;
-import main.Pawn;
+import main.pieces.Piece;
+import main.pieces.King;
+import main.pieces.Queen;
+import main.pieces.Rook;
+import main.pieces.Bishop;
+import main.pieces.Knight;
+import main.pieces.Pawn;
 
 import java.io.InputStream;
 

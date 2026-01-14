@@ -1,5 +1,9 @@
 package main;
 
+import main.pieces.King;
+import main.pieces.Piece;
+import main.pieces.Rook;
+
 import java.util.ArrayList;
 import java.util.List;
 

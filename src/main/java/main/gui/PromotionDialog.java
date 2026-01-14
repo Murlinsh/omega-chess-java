@@ -11,6 +11,7 @@ import javafx.stage.StageStyle;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import main.*;
+import main.pieces.*;
 
 public class PromotionDialog {
     private Stage stage;

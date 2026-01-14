@@ -1,5 +1,7 @@
 package main;
 
+import main.pieces.Piece;
+
 import java.util.*;
 
 public class AttackMap {

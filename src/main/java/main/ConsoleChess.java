@@ -1,6 +1,7 @@
 package main;
 
-import java.util.List;
+import main.pieces.*;
+
 import java.util.Scanner;
 
 public class ConsoleChess {

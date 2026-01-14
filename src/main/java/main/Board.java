@@ -1,14 +1,13 @@
 package main;
 
-import javafx.scene.control.Alert;
+import main.pieces.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
 public class Board {
     private Piece[][] grid;
-    private int BOARD_SIZE;
+    private int BOARD_SIZE; // Убираем финальное, теперь зависит от типа игры
     private final Game game;
     private AttackMap whiteAttackMap;
     private AttackMap blackAttackMap;
@@ -16,14 +15,10 @@ public class Board {
 
     public Board(Game game) {
         this.game = game;
-        if (this.game.getGameType() == GameType.CLASSIC) {
-            this.BOARD_SIZE = 8;
-            this.grid = new Piece[8][8];
-            this.whiteAttackMap = new AttackMap();
-            this.blackAttackMap = new AttackMap();
-        } else {
-            throw new UnsupportedOperationException("OMEGA chess not implemented yet");
-        }
+        this.BOARD_SIZE = game.getGameType().getBoardSize(); // Получаем размер из GameType
+        this.grid = new Piece[BOARD_SIZE][BOARD_SIZE];
+        this.whiteAttackMap = new AttackMap();
+        this.blackAttackMap = new AttackMap();
     }
 
     // Расстановка фигур на доску
@@ -38,13 +33,13 @@ public class Board {
 
     private void setupClassicBoard() {
         // 1. Белые пешки (ряд 2 = row=1)
-        for (int col = 0; col < 8; col++) {
+        for (int col = 0; col < BOARD_SIZE; col++) { // Используем BOARD_SIZE
             placePiece(new Pawn(Color.WHITE, new Position(1, col)));
         }
 
         // 2. Чёрные пешки (ряд 7 = row=6)
-        for (int col = 0; col < 8; col++) {
-            placePiece(new Pawn(Color.BLACK, new Position(6, col)));
+        for (int col = 0; col < BOARD_SIZE; col++) { // Используем BOARD_SIZE
+            placePiece(new Pawn(Color.BLACK, new Position(BOARD_SIZE - 2, col))); // BOARD_SIZE - 2 вместо 6
         }
 
         // 3. Белые фигуры (ряд 1 = row=0)
@@ -58,14 +53,14 @@ public class Board {
         placePiece(new Rook(Color.WHITE, new Position(0, 7)));
 
         // 4. Чёрные фигуры (ряд 8 = row=7)
-        placePiece(new Rook(Color.BLACK, new Position(7, 7)));
-        placePiece(new Knight(Color.BLACK, new Position(7, 6)));
-        placePiece(new Bishop(Color.BLACK, new Position(7, 5)));
-        placePiece(new King(Color.BLACK, new Position(7, 4)));
-        placePiece(new Queen(Color.BLACK, new Position(7, 3)));
-        placePiece(new Bishop(Color.BLACK, new Position(7, 2)));
-        placePiece(new Knight(Color.BLACK, new Position(7, 1)));
-        placePiece(new Rook(Color.BLACK, new Position(7, 0)));
+        placePiece(new Rook(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 1))); // (7,7) для 8x8
+        placePiece(new Knight(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 2)));
+        placePiece(new Bishop(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 3)));
+        placePiece(new King(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 4)));
+        placePiece(new Queen(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 5)));
+        placePiece(new Bishop(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 6)));
+        placePiece(new Knight(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 7)));
+        placePiece(new Rook(Color.BLACK, new Position(BOARD_SIZE - 1, 0)));
 
         calculateAttackMaps();
     }
@@ -121,8 +116,8 @@ public class Board {
     }
 
     private Position findKingPosition(Color kingColor) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 Position pos = new Position(row, col);
                 Piece piece = getPieceAt(pos);
                 if (piece instanceof King && piece.getColor() == kingColor) {
@@ -199,7 +194,7 @@ public class Board {
             return false;
         }
 
-        if (!to.isValid(BOARD_SIZE)) {
+        if (!to.isValid(this.BOARD_SIZE)) {
             return false;
         }
 
@@ -254,7 +249,7 @@ public class Board {
     }
 
     public Piece getPieceAt(Position position) {
-        if (!position.isValid(8)) {
+        if (!position.isValid(this.BOARD_SIZE)) {
             return null;
         }
         return grid[position.getRow()][position.getCol()];
@@ -271,7 +266,7 @@ public class Board {
             return false;
         }
 
-        if (!to.isValid(8)) {
+        if (!to.isValid(this.BOARD_SIZE)) {
             return false;
         }
 

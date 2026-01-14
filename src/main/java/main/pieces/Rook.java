@@ -1,4 +1,9 @@
-package main;
+package main.pieces;
+import main.Board;
+import main.Color;
+import main.MoveCalculator;
+import main.Position;
+
 import java.util.List;
 
 public class Rook extends Piece {

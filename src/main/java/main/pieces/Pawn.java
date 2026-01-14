@@ -1,9 +1,9 @@
-package main;
+package main.pieces;
+
+import main.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static main.MoveCalculator.BOARD_SIZE;
 
 public class Pawn extends Piece {
     private boolean hasMoved = false;
@@ -21,13 +21,14 @@ public class Pawn extends Piece {
         // Только диагональные атаки
         List<Position> moves = new ArrayList<>();
         int offset_forward = this.getColor() == Color.WHITE ? +1 : -1;
+        GameType gameType = board.getGame().getGameType();
 
         // Вперёд-вправо
         Position forwardRight = new Position(
                 this.getPosition().getRow() + offset_forward,
                 this.getPosition().getCol() + 1
         );
-        if (forwardRight.isValid(BOARD_SIZE)) {
+        if (forwardRight.isValid(gameType)) {
             moves.add(forwardRight);
         }
         // Вперёд-влево
@@ -35,7 +36,7 @@ public class Pawn extends Piece {
                 this.getPosition().getRow() + offset_forward,
                 this.getPosition().getCol() - 1
         );
-        if (forwardLeft.isValid(BOARD_SIZE)) {
+        if (forwardLeft.isValid(gameType)) {
             moves.add(forwardLeft);
         }
         return moves;

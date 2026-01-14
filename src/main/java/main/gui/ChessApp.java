@@ -7,6 +7,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import main.*;
+import main.pieces.*;
 
 import java.util.Optional;
 

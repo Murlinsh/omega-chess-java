@@ -7,6 +7,7 @@ import javafx.scene.text.Text;
 import javafx.scene.paint.Color;
 import javafx.scene.control.Alert;
 import main.*;
+import main.pieces.*;
 
 import java.util.HashMap;
 import java.util.List;
