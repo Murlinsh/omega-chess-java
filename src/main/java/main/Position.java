@@ -38,7 +38,20 @@ public class Position {
     // Дополнительный метод для работы с GameType
     public boolean isValid(GameType gameType) {
         int boardSize = gameType.getBoardSize();
-        return isValid(boardSize);
+
+        if (isCornerCell()) {
+            // Угловые клетки валидны только для OMEGA
+            if (gameType != GameType.OMEGA) return false;
+
+            // Проверяем специальные координаты угловых клеток
+            return (row == -1 && col == -1) ||     // Белый Чемпион
+                    (row == -1 && col == 10) ||     // Белый Волшебник
+                    (row == 10 && col == -1) ||     // Черный Чемпион
+                    (row == 10 && col == 10);       // Черный Волшебник
+        } else {
+            // Основная доска
+            return row >= 0 && row < boardSize && col >= 0 && col < boardSize;
+        }
     }
 
     public boolean isCornerCell() {
@@ -86,5 +99,25 @@ public class Position {
             return new Position(9, 9); // Примыкает к j10
         }
         return null;
+    }
+
+    public String getOmegaCornerName() {
+        if (!isCornerCell()) return null;
+
+        if (row == -1 && col == -1) return "w1";
+        if (row == -1 && col == 10) return "w2";
+        if (row == 10 && col == -1) return "w3";
+        if (row == 10 && col == 10) return "w4";
+        return null;
+    }
+
+    public static Position createCornerPosition(String cornerName) {
+        switch(cornerName) {
+            case "w1": return new Position(-1, -1, true);
+            case "w2": return new Position(-1, 10, true);
+            case "w3": return new Position(10, -1, true);
+            case "w4": return new Position(10, 10, true);
+            default: return null;
+        }
     }
 }

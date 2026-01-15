@@ -12,6 +12,8 @@ import main.pieces.Rook;
 import main.pieces.Bishop;
 import main.pieces.Knight;
 import main.pieces.Pawn;
+import main.pieces.Champion;
+import main.pieces.Wizard;
 
 import java.io.InputStream;
 
@@ -32,14 +34,12 @@ public class PieceView {
         Image image = loadPieceImage();
 
         if (image != null && !image.isError()) {
-            // Успешно загрузили изображение
             ImageView pieceImage = new ImageView(image);
-            pieceImage.setFitWidth(56);      // 80% от размера клетки
+            pieceImage.setFitWidth(56);
             pieceImage.setFitHeight(56);
             pieceImage.setPreserveRatio(true);
             pieceImage.setSmooth(true);
 
-            // Добавляем тень для объема
             DropShadow shadow = new DropShadow();
             shadow.setColor(Color.rgb(0, 0, 0, 0.4));
             shadow.setRadius(4);
@@ -49,11 +49,9 @@ public class PieceView {
 
             view.getChildren().add(pieceImage);
 
-            // Отладочное сообщение
             System.out.println("Изображение загружено: " + getPieceName() + " " +
                     (piece.getColor() == main.Color.WHITE ? "белая" : "черная"));
         } else {
-            // Fallback на текстовые символы
             System.out.println("Использую fallback для: " + getPieceName());
             createFallbackView();
         }
@@ -63,7 +61,6 @@ public class PieceView {
         String imagePath = getPieceImagePath();
 
         try {
-            // Теперь путь должен быть простым
             InputStream is = getClass().getResourceAsStream(imagePath);
 
             if (is == null) {
@@ -71,10 +68,11 @@ public class PieceView {
 
                 // Пробуем другие варианты
                 String[] alternatives = {
-                        imagePath,                    // /pieces/white_king.png
-                        imagePath.substring(1),       // pieces/white_king.png
-                        "resources" + imagePath,      // resources/pieces/white_king.png
-                        "/resources" + imagePath      // /resources/pieces/white_king.png
+                        imagePath,
+                        imagePath.substring(1),
+                        "resources" + imagePath,
+                        "/resources" + imagePath,
+                        "../resources" + imagePath
                 };
 
                 for (String altPath : alternatives) {
@@ -82,7 +80,6 @@ public class PieceView {
                     is = getClass().getResourceAsStream(altPath);
                     if (is != null) {
                         System.out.println("Найден по пути: " + altPath);
-                        imagePath = altPath;
                         break;
                     }
                 }
@@ -94,7 +91,6 @@ public class PieceView {
 
             Image image = new Image(is);
             is.close();
-
             return image;
 
         } catch (Exception e) {
@@ -113,8 +109,10 @@ public class PieceView {
         else if (piece instanceof Bishop) type = "bishop";
         else if (piece instanceof Knight) type = "knight";
         else if (piece instanceof Pawn) type = "pawn";
+        else if (piece instanceof Champion) type = "champion";
+        else if (piece instanceof Wizard) type = "wizard";
 
-        // Путь к изображению из resources
+        // Путь к изображению
         return "/pieces/" + color + "_" + type + ".png";
     }
 
@@ -148,6 +146,8 @@ public class PieceView {
         else if (piece instanceof Bishop) return "♗";
         else if (piece instanceof Knight) return "♘";
         else if (piece instanceof Pawn) return "♙";
+        else if (piece instanceof Champion) return "C";
+        else if (piece instanceof Wizard) return "W";
         else return "?";
     }
 
@@ -158,6 +158,8 @@ public class PieceView {
         else if (piece instanceof Bishop) return "слон";
         else if (piece instanceof Knight) return "конь";
         else if (piece instanceof Pawn) return "пешка";
+        else if (piece instanceof Champion) return "чемпион";
+        else if (piece instanceof Wizard) return "волшебник";
         else return "фигура";
     }
 

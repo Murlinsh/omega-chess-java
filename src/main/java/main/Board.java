@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Stack;
 
 public class Board {
-    private Piece[][] grid;
-    private int BOARD_SIZE; // Убираем финальное, теперь зависит от типа игры
+    private Piece[][] mainGrid;  // Основная доска
+    private Piece[][] cornerGrid; // Угловые клетки (только для OMEGA)
+    private int BOARD_SIZE; // Размер основной доски
     private final Game game;
     private AttackMap whiteAttackMap;
     private AttackMap blackAttackMap;
@@ -15,8 +16,19 @@ public class Board {
 
     public Board(Game game) {
         this.game = game;
-        this.BOARD_SIZE = game.getGameType().getBoardSize(); // Получаем размер из GameType
-        this.grid = new Piece[BOARD_SIZE][BOARD_SIZE];
+        GameType gameType = game.getGameType();
+
+        if (gameType == GameType.CLASSIC) {
+            this.BOARD_SIZE = 8;
+            this.mainGrid = new Piece[BOARD_SIZE][BOARD_SIZE];
+            this.cornerGrid = null; // Классика не использует углы
+        } else {
+            this.BOARD_SIZE = 10;
+            this.mainGrid = new Piece[BOARD_SIZE][BOARD_SIZE];
+            this.cornerGrid = new Piece[2][2]; // [0][0] - Белый Чемпион, [0][1] - Белый Волшебник
+            // [1][0] - Черный Чемпион, [1][1] - Черный Волшебник
+        }
+
         this.whiteAttackMap = new AttackMap();
         this.blackAttackMap = new AttackMap();
     }
@@ -33,13 +45,13 @@ public class Board {
 
     private void setupClassicBoard() {
         // 1. Белые пешки (ряд 2 = row=1)
-        for (int col = 0; col < BOARD_SIZE; col++) { // Используем BOARD_SIZE
+        for (int col = 0; col < BOARD_SIZE; col++) {
             placePiece(new Pawn(Color.WHITE, new Position(1, col)));
         }
 
         // 2. Чёрные пешки (ряд 7 = row=6)
-        for (int col = 0; col < BOARD_SIZE; col++) { // Используем BOARD_SIZE
-            placePiece(new Pawn(Color.BLACK, new Position(BOARD_SIZE - 2, col))); // BOARD_SIZE - 2 вместо 6
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            placePiece(new Pawn(Color.BLACK, new Position(BOARD_SIZE - 2, col)));
         }
 
         // 3. Белые фигуры (ряд 1 = row=0)
@@ -53,7 +65,7 @@ public class Board {
         placePiece(new Rook(Color.WHITE, new Position(0, 7)));
 
         // 4. Чёрные фигуры (ряд 8 = row=7)
-        placePiece(new Rook(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 1))); // (7,7) для 8x8
+        placePiece(new Rook(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 1)));
         placePiece(new Knight(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 2)));
         placePiece(new Bishop(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 3)));
         placePiece(new King(Color.BLACK, new Position(BOARD_SIZE - 1, BOARD_SIZE - 4)));
@@ -66,16 +78,128 @@ public class Board {
     }
 
     private void setupOmegaBoard() {
-        throw new UnsupportedOperationException("OMEGA chess not implemented yet");
+        // Очищаем основную доску
+        this.mainGrid = new Piece[BOARD_SIZE][BOARD_SIZE];
+
+        // Угловые клетки остаются как есть (cornerGrid[2][2])
+        if (cornerGrid != null) {
+            this.cornerGrid = new Piece[2][2];
+        }
+
+        // 1. БЕЛЫЕ ПЕШКИ (ряд 2 = row=1) - ВСЕ 10 пешек!
+        for (int col = 0; col < 10; col++) {
+            placePiece(new Pawn(Color.WHITE, new Position(1, col)));
+        }
+
+        // 2. БЕЛЫЕ ФИГУРЫ (ряд 1 = row=0) - правильная Omega Chess расстановка
+        // a1, b1, c1, d1, e1, f1, g1, h1, i1, j1
+        placePiece(new Champion(Color.WHITE, new Position(0, 0)));   // a1
+        placePiece(new Rook(Color.WHITE, new Position(0, 1)));       // b1
+        placePiece(new Knight(Color.WHITE, new Position(0, 2)));     // c1
+        placePiece(new Bishop(Color.WHITE, new Position(0, 3)));     // d1
+        placePiece(new Queen(Color.WHITE, new Position(0, 4)));      // e1
+        placePiece(new King(Color.WHITE, new Position(0, 5)));       // f1
+        placePiece(new Bishop(Color.WHITE, new Position(0, 6)));     // g1
+        placePiece(new Knight(Color.WHITE, new Position(0, 7)));     // h1
+        placePiece(new Rook(Color.WHITE, new Position(0, 8)));       // i1
+        placePiece(new Champion(Color.WHITE, new Position(0, 9)));   // j1
+
+        // 3. ЧЕРНЫЕ ПЕШКИ (ряд 9 = row=8) - ВСЕ 10 пешек!
+        for (int col = 0; col < 10; col++) {
+            placePiece(new Pawn(Color.BLACK, new Position(8, col)));
+        }
+
+        // 4. ЧЕРНЫЕ ФИГУРЫ (ряд 10 = row=9)
+        // a10, b10, c10, d10, e10, f10, g10, h10, i10, j10
+        placePiece(new Champion(Color.BLACK, new Position(9, 0)));   // a10
+        placePiece(new Rook(Color.BLACK, new Position(9, 1)));       // b10
+        placePiece(new Knight(Color.BLACK, new Position(9, 2)));     // c10
+        placePiece(new Bishop(Color.BLACK, new Position(9, 3)));     // d10
+        placePiece(new Queen(Color.BLACK, new Position(9, 4)));      // e10
+        placePiece(new King(Color.BLACK, new Position(9, 5)));       // f10
+        placePiece(new Bishop(Color.BLACK, new Position(9, 6)));     // g10
+        placePiece(new Knight(Color.BLACK, new Position(9, 7)));     // h10
+        placePiece(new Rook(Color.BLACK, new Position(9, 8)));       // i10
+        placePiece(new Champion(Color.BLACK, new Position(9, 9)));   // j10
+
+        // 5. УГЛОВЫЕ ВОЛШЕБНИКИ (cornerGrid)
+        if (cornerGrid != null) {
+            // БЕЛЫЕ волшебники в верхних углах (ряд -1)
+            cornerGrid[0][0] = new Wizard(Color.WHITE, new Position(-1, -1, true)); // w1 - Белый
+            cornerGrid[0][1] = new Wizard(Color.WHITE, new Position(-1, 10, true)); // w2 - Белый
+            // ЧЕРНЫЕ волшебники в нижних углах (ряд 10)
+            cornerGrid[1][0] = new Wizard(Color.BLACK, new Position(10, -1, true)); // w3 - Черный
+            cornerGrid[1][1] = new Wizard(Color.BLACK, new Position(10, 10, true)); // w4 - ЧерныйcornerGrid[1][1] = new Wizard(Color.WHITE, new Position(10, 10, true)); // w4
+        }
+
+        calculateAttackMaps();
+    }
+
+
+    public void debugPrintOmegaSetup() {
+        System.out.println("\n=== ПРОВЕРКА РАССТАНОВКИ OMEGA CHESS ===");
+
+        // Проверяем ВСЕ угловые фигуры
+        System.out.println("Угловые фигуры:");
+        Position[] cornerPositions = {
+                new Position(-1, -1, true),  // w1
+                new Position(-1, 10, true),  // w2
+                new Position(10, -1, true),  // w3
+                new Position(10, 10, true)   // w4
+        };
+
+        for (Position pos : cornerPositions) {
+            Piece piece = getPieceAt(pos);
+            System.out.println(pos + ": " +
+                    (piece != null ?
+                            piece.getClass().getSimpleName() + " " + piece.getColor() :
+                            "null"));
+        }
+
+        // Проверяем крайние фигуры на основной доске
+        System.out.println("\nКрайние фигуры на основной доске:");
+        System.out.println("a1 (0,0): " +
+                (getPieceAt(new Position(0, 0)) != null ?
+                        getPieceAt(new Position(0, 0)).getClass().getSimpleName() + " " + getPieceAt(new Position(0, 0)).getColor() : "null"));
+        System.out.println("j1 (0,9): " +
+                (getPieceAt(new Position(0, 9)) != null ?
+                        getPieceAt(new Position(0, 9)).getClass().getSimpleName() + " " + getPieceAt(new Position(0, 9)).getColor() : "null"));
     }
 
     public void calculateAttackMaps() {
         whiteAttackMap.clear();
         blackAttackMap.clear();
 
-        for (int x = 0; x <= this.BOARD_SIZE - 1; x++) {
-            for (int y = 0; y <= this.BOARD_SIZE - 1; y++) {
-                Piece piece = grid[y][x];
+        // Сканируем основную доску
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+                Piece piece = mainGrid[row][col];
+                if (piece != null) {
+                    Color pieceColor = piece.getColor();
+                    List<Position> attackingSquares = piece.getAttackingSquares(this);
+                    for (Position attackedSquare : attackingSquares) {
+                        if (pieceColor == Color.WHITE) {
+                            whiteAttackMap.addAttack(attackedSquare, piece);
+                        } else {
+                            blackAttackMap.addAttack(attackedSquare, piece);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Сканируем угловые клетки (только для OMEGA)
+        if (game.getGameType() == GameType.OMEGA && cornerGrid != null) {
+            // Проверяем все 4 угловые клетки
+            Position[] cornerPositions = {
+                    new Position(-1, -1, true),  // Белый Чемпион
+                    new Position(-1, 10, true),  // Белый Волшебник
+                    new Position(10, -1, true),  // Черный Чемпион
+                    new Position(10, 10, true)   // Черный Волшебник
+            };
+
+            for (Position cornerPos : cornerPositions) {
+                Piece piece = getPieceAt(cornerPos);
                 if (piece != null) {
                     Color pieceColor = piece.getColor();
                     List<Position> attackingSquares = piece.getAttackingSquares(this);
@@ -118,41 +242,22 @@ public class Board {
     private Position findKingPosition(Color kingColor) {
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
-                Position pos = new Position(row, col);
-                Piece piece = getPieceAt(pos);
+                Piece piece = mainGrid[row][col];
                 if (piece instanceof King && piece.getColor() == kingColor) {
-                    return pos;
+                    return new Position(row, col);
                 }
             }
         }
         return null;
     }
 
-    //    public boolean hasLegalMoves(Color color) {
-//        for (int row = 0; row < BOARD_SIZE; row++) {
-//            for (int col = 0; col < BOARD_SIZE; col++) {
-//                Position from = new Position(row, col);
-//                Piece piece = getPieceAt(from);
-//
-//                if (piece != null && piece.getColor() == color) {
-//                    List<Position> moves = piece.getPossibleMoves(this);
-//
-//                    for (Position to : moves) {
-//                        if (isMoveLegal(from, to, color)) {
-//                            return true;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        return false;
-//    }
     public boolean hasLegalMoves(Color color) {
         System.out.println("\n=== Проверка hasLegalMoves для " + color + " ===");
 
         int piecesChecked = 0;
         int totalMoves = 0;
 
+        // Проверяем фигуры на основной доске
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 Position from = new Position(row, col);
@@ -180,12 +285,44 @@ public class Board {
             }
         }
 
+        // Проверяем угловые фигуры (только для OMEGA)
+        if (game.getGameType() == GameType.OMEGA) {
+            Position[] cornerPositions = {
+                    new Position(-1, -1, true),
+                    new Position(-1, 10, true),
+                    new Position(10, -1, true),
+                    new Position(10, 10, true)
+            };
+
+            for (Position from : cornerPositions) {
+                Piece piece = getPieceAt(from);
+                if (piece != null && piece.getColor() == color) {
+                    piecesChecked++;
+                    System.out.println("  Угловая фигура " + piece.getClass().getSimpleName() +
+                            " на " + from);
+
+                    List<Position> moves = piece.getPossibleMoves(this);
+                    System.out.println("    Возможных ходов: " + moves.size());
+                    totalMoves += moves.size();
+
+                    for (Position to : moves) {
+                        boolean legal = isMoveLegal(from, to, color);
+                        System.out.println("      " + from + " → " + to + " : " +
+                                (legal ? "ЛЕГАЛЬНЫЙ" : "нелегальный"));
+                        if (legal) {
+                            System.out.println("=== Найден легальный ход, возвращаем true ===");
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
         System.out.println("Итог: " + piecesChecked + " фигур, " +
                 totalMoves + " возможных ходов, легальных: 0");
         System.out.println("=== Возвращаем false ===");
         return false;
     }
-
 
     public boolean isMoveLegal(Position from, Position to, Color movingColor) {
         // Базовые проверки
@@ -194,7 +331,7 @@ public class Board {
             return false;
         }
 
-        if (!to.isValid(this.BOARD_SIZE)) {
+        if (!to.isValid(game.getGameType())) {
             return false;
         }
 
@@ -219,7 +356,7 @@ public class Board {
         Piece capturedPiece = getPieceAt(to);
 
         // Временный ход
-        setPieceAtInternal(null, from);
+        removePieceAtInternal(from);
         setPieceAtInternal(movedPiece, to);
 
         // Пересчитываем карты атак
@@ -249,10 +386,52 @@ public class Board {
     }
 
     public Piece getPieceAt(Position position) {
-        if (!position.isValid(this.BOARD_SIZE)) {
+        GameType gameType = game.getGameType();
+
+        // ВАЖНО: проверяем ВАЛИДНОСТЬ позиции для текущего типа игры
+        if (!position.isValid(gameType)) {
             return null;
         }
-        return grid[position.getRow()][position.getCol()];
+
+        if (position.isCornerCell()) {
+            // Угловые клетки - только для OMEGA
+            if (gameType != GameType.OMEGA || cornerGrid == null) {
+                return null;
+            }
+            return getCornerPiece(position);
+        } else {
+            // Основная доска
+            // ВАЖНО: проверяем границы массива
+            if (position.getRow() < 0 || position.getRow() >= BOARD_SIZE ||
+                    position.getCol() < 0 || position.getCol() >= BOARD_SIZE) {
+                return null;
+            }
+            return mainGrid[position.getRow()][position.getCol()];
+        }
+    }
+
+    private Piece getCornerPiece(Position cornerPos) {
+        int row = cornerPos.getRow();
+        int col = cornerPos.getCol();
+
+        if (row == -1 && col == -1) return cornerGrid[0][0]; // w1 - Белый Волшебник
+        if (row == -1 && col == 10) return cornerGrid[0][1]; // w2 - Белый Волшебник
+        if (row == 10 && col == -1) return cornerGrid[1][0]; // w3 - Черный Волшебник
+        if (row == 10 && col == 10) return cornerGrid[1][1]; // w4 - Черный Волшебник
+
+        return null;
+    }
+
+    private void setCornerPiece(Position cornerPos, Piece piece) {
+        if (cornerGrid == null) return;
+
+        int row = cornerPos.getRow();
+        int col = cornerPos.getCol();
+
+        if (row == -1 && col == -1) cornerGrid[0][0] = piece;
+        else if (row == -1 && col == 10) cornerGrid[0][1] = piece;
+        else if (row == 10 && col == -1) cornerGrid[1][0] = piece;
+        else if (row == 10 && col == 10) cornerGrid[1][1] = piece;
     }
 
     // Для начальной расстановки
@@ -266,15 +445,31 @@ public class Board {
             return false;
         }
 
-        if (!to.isValid(this.BOARD_SIZE)) {
+        if (!to.isValid(game.getGameType())) {
             return false;
         }
 
         Color movingColor = piece.getColor();
 
-        // ПРОВЕРКА РОКИРОВКИ (должна быть ДО снапшота для короля)
         if (piece instanceof King) {
             King king = (King) piece;
+
+            // === ОТЛАДОЧНЫЙ ВЫВОД ===
+            System.out.println("\n=== DEBUG CASTLING CHECK ===");
+            System.out.println("King at: " + from);
+            System.out.println("Target: " + to);
+            System.out.println("Game type: " + game.getGameType());
+
+            List<CastlingInfo> possibleCastlingsDebug = MoveCalculator.getPossibleCastlings(king, this);
+            System.out.println("Possible castlings found: " + possibleCastlingsDebug.size());
+
+            for (CastlingInfo castling : possibleCastlingsDebug) {
+                System.out.println("  - " + castling);
+                System.out.println("    King to: " + castling.kingTo);
+                System.out.println("    Compare with target: " + to + " -> equals: " + to.equals(castling.kingTo));
+            }
+            // === КОНЕЦ ОТЛАДОЧНОГО ВЫВОДА ===
+
             List<CastlingInfo> possibleCastlings = MoveCalculator.getPossibleCastlings(king, this);
 
             for (CastlingInfo castling : possibleCastlings) {
@@ -296,12 +491,12 @@ public class Board {
                     }
 
                     // Переместить короля
-                    setPieceAtInternal(null, castling.kingFrom);
+                    removePieceAtInternal(castling.kingFrom);
                     setPieceAtInternal(king, castling.kingTo);
                     king.markAsMoved();
 
                     // Переместить ладью
-                    setPieceAtInternal(null, castling.rookFrom);
+                    removePieceAtInternal(castling.rookFrom);
                     setPieceAtInternal(rook, castling.rookTo);
                     ((Rook) rook).markAsMoved();
 
@@ -309,6 +504,7 @@ public class Board {
                     game.clearEnPassantTarget();
                     calculateAttackMaps();
 
+                    System.out.println("=== CASTLING SUCCESSFUL ===");
                     return true;
                 }
             }
@@ -353,7 +549,7 @@ public class Board {
                     // - Добавить в capturedPieces
                     game.capturePiece(capturedPiece);
                     // - Удалить с доски
-                    setPieceAtInternal(null, capturedPos);
+                    removePieceAtInternal(capturedPos);
                 }
 
                 // 4. ОЧИСТИТЬ enPassantTarget
@@ -368,7 +564,7 @@ public class Board {
         }
 
         // Очищаем старую клетку
-        setPieceAtInternal(null, from);
+        removePieceAtInternal(from);
 
         // Отмечаем пешку как moved и устанавливаем enPassantTarget при двойном ходе
         if (piece instanceof Pawn) {
@@ -402,7 +598,20 @@ public class Board {
         if (piece != null) {
             piece.setPosition(position);
         }
-        grid[position.getRow()][position.getCol()] = piece;
+
+        if (position.isCornerCell()) {
+            setCornerPiece(position, piece);
+        } else {
+            mainGrid[position.getRow()][position.getCol()] = piece;
+        }
+    }
+
+    private void removePieceAtInternal(Position position) {
+        if (position.isCornerCell()) {
+            setCornerPiece(position, null);
+        } else {
+            mainGrid[position.getRow()][position.getCol()] = null;
+        }
     }
 
     public static boolean isLightSquare(Position pos) {
@@ -414,7 +623,7 @@ public class Board {
     }
 
     public void replacePiece(Position pos, Piece newPiece) {
-        if (pos.isValid(BOARD_SIZE)) {
+        if (pos.isValid(game.getGameType())) {
             setPieceAtInternal(newPiece, pos);
         } else {
             throw new IllegalArgumentException("Некорректная позиция");
@@ -426,15 +635,17 @@ public class Board {
         Piece capturedPiece = getPieceAt(to);
         Position capturedPos = (capturedPiece != null) ? to : null;
 
-        // Получаем информацию о рокировках
-        King whiteKing = findKing(Color.WHITE);
-        King blackKing = findKing(Color.BLACK);
+        // Получаем информацию о рокировках - ИСПРАВЛЕНО для Omega Chess
+        Position whiteKingPos = findKingPosition(Color.WHITE);
+        Position blackKingPos = findKingPosition(Color.BLACK);
+        King whiteKing = (whiteKingPos != null) ? (King) getPieceAt(whiteKingPos) : null;
+        King blackKing = (blackKingPos != null) ? (King) getPieceAt(blackKingPos) : null;
 
-        // Находим ладьи для рокировок
-        Rook whiteRookKingSide = getRookAt(new Position(0, 7), Color.WHITE);
-        Rook whiteRookQueenSide = getRookAt(new Position(0, 0), Color.WHITE);
-        Rook blackRookKingSide = getRookAt(new Position(7, 7), Color.BLACK);
-        Rook blackRookQueenSide = getRookAt(new Position(7, 0), Color.BLACK);
+        // Находим ладьи для рокировок - ИСПРАВЛЕНО: динамические координаты для разных типов игр
+        Rook whiteRookKingSide = getRookAt(getRookKingSidePosition(Color.WHITE), Color.WHITE);
+        Rook whiteRookQueenSide = getRookAt(getRookQueenSidePosition(Color.WHITE), Color.WHITE);
+        Rook blackRookKingSide = getRookAt(getRookKingSidePosition(Color.BLACK), Color.BLACK);
+        Rook blackRookQueenSide = getRookAt(getRookQueenSidePosition(Color.BLACK), Color.BLACK);
 
         // Проверяем, является ли ход рокировкой
         boolean isCastling = (piece instanceof King && Math.abs(from.getCol() - to.getCol()) == 2);
@@ -443,18 +654,18 @@ public class Board {
         boolean isEnPassant = (piece instanceof Pawn && to.equals(game.getEnPassantTarget()));
 
         // Проверяем, является ли ход превращением пешки
+        int lastRow = this.BOARD_SIZE - 1;
         boolean isPromotion = (piece instanceof Pawn &&
-                ((piece.getColor() == Color.WHITE && to.getRow() == 7) ||
+                ((piece.getColor() == Color.WHITE && to.getRow() == lastRow) ||
                         (piece.getColor() == Color.BLACK && to.getRow() == 0)));
 
         Piece castlingRook = null;
         if (isCastling) {
             // Определяем, какая ладья участвует в рокировке
-            if (to.getCol() == 6) { // Короткая рокировка
-                castlingRook = getPieceAt(new Position(from.getRow(), 7));
-            } else { // Длинная рокировка
-                castlingRook = getPieceAt(new Position(from.getRow(), 0));
-            }
+            int rookCol = (to.getCol() > from.getCol()) ?
+                    (game.getGameType() == GameType.CLASSIC ? 7 : 8) :  // Короткая
+                    (game.getGameType() == GameType.CLASSIC ? 0 : 1);    // Длинная
+            castlingRook = getPieceAt(new Position(from.getRow(), rookCol));
         }
 
         return new MoveSnapshot(
@@ -473,6 +684,19 @@ public class Board {
                 (castlingRook != null) ? getHasMovedState(castlingRook) : false,
                 isCastling, isEnPassant, isPromotion
         );
+    }
+
+    // Вспомогательные методы для получения позиций ладей
+    private Position getRookKingSidePosition(Color color) {
+        int row = (color == Color.WHITE) ? 0 : (BOARD_SIZE - 1);
+        int col = (game.getGameType() == GameType.CLASSIC) ? (BOARD_SIZE - 1) : (BOARD_SIZE - 2);
+        return new Position(row, col);
+    }
+
+    private Position getRookQueenSidePosition(Color color) {
+        int row = (color == Color.WHITE) ? 0 : (BOARD_SIZE - 1);
+        int col = (game.getGameType() == GameType.CLASSIC) ? 0 : 1;
+        return new Position(row, col);
     }
 
     private boolean getHasMovedState(Piece piece) {
@@ -502,7 +726,7 @@ public class Board {
             }
         } else {
             // Очищаем целевую клетку
-            setPieceAtInternal(null, snapshot.to);
+            removePieceAtInternal(snapshot.to);
         }
 
         // 3. Восстанавливаем состояние hasMoved
@@ -523,21 +747,31 @@ public class Board {
 
         // 6. Особый случай: рокировка
         if (snapshot.isCastling && snapshot.castlingRook != null) {
-            // Определяем, откуда перемещалась ладья
+            GameType gameType = game.getGameType();
             Position rookFrom;
             Position rookTo;
 
-            if (snapshot.to.getCol() == 6) { // Короткая рокировка
-                rookFrom = new Position(snapshot.from.getRow(), 7);
-                rookTo = new Position(snapshot.from.getRow(), 5);
-            } else { // Длинная рокировка
-                rookFrom = new Position(snapshot.from.getRow(), 0);
-                rookTo = new Position(snapshot.from.getRow(), 3);
+            if (gameType == GameType.CLASSIC) {
+                if (snapshot.to.getCol() == 6) { // Короткая рокировка (O-O)
+                    rookFrom = new Position(snapshot.from.getRow(), 7);
+                    rookTo = new Position(snapshot.from.getRow(), 5);
+                } else { // Длинная рокировка (O-O-O)
+                    rookFrom = new Position(snapshot.from.getRow(), 0);
+                    rookTo = new Position(snapshot.from.getRow(), 3);
+                }
+            } else { // OMEGA
+                if (snapshot.to.getCol() == 7) { // Короткая рокировка (O-O) f1→h1
+                    rookFrom = new Position(snapshot.from.getRow(), 8); // i1
+                    rookTo = new Position(snapshot.from.getRow(), 6);   // g1
+                } else { // Длинная рокировка (O-O-O) f1→d1
+                    rookFrom = new Position(snapshot.from.getRow(), 1); // b1
+                    rookTo = new Position(snapshot.from.getRow(), 4);   // e1
+                }
             }
 
             // Возвращаем ладью на место
             setPieceAtInternal(snapshot.castlingRook, rookFrom);
-            setPieceAtInternal(null, rookTo);
+            removePieceAtInternal(rookTo);
             restoreHasMovedState(snapshot.castlingRook, snapshot.castlingRookHasMovedBefore);
         }
 
@@ -572,8 +806,10 @@ public class Board {
 
     private void restoreCastlingStates(MoveSnapshot snapshot) {
         // Восстанавливаем состояние королей
-        King whiteKing = findKing(Color.WHITE);
-        King blackKing = findKing(Color.BLACK);
+        Position whiteKingPos = findKingPosition(Color.WHITE);
+        Position blackKingPos = findKingPosition(Color.BLACK);
+        King whiteKing = (whiteKingPos != null) ? (King) getPieceAt(whiteKingPos) : null;
+        King blackKing = (blackKingPos != null) ? (King) getPieceAt(blackKingPos) : null;
 
         if (whiteKing != null) {
             if (snapshot.whiteKingHasMovedBefore) {
@@ -591,11 +827,11 @@ public class Board {
             }
         }
 
-        // Восстанавливаем состояние ладей
-        restoreRookState(new Position(0, 7), snapshot.whiteRookKingSideHasMovedBefore, Color.WHITE);
-        restoreRookState(new Position(0, 0), snapshot.whiteRookQueenSideHasMovedBefore, Color.WHITE);
-        restoreRookState(new Position(7, 7), snapshot.blackRookKingSideHasMovedBefore, Color.BLACK);
-        restoreRookState(new Position(7, 0), snapshot.blackRookQueenSideHasMovedBefore, Color.BLACK);
+        // Восстанавливаем состояние ладей - ИСПРАВЛЕНО: динамические координаты
+        restoreRookState(getRookKingSidePosition(Color.WHITE), snapshot.whiteRookKingSideHasMovedBefore, Color.WHITE);
+        restoreRookState(getRookQueenSidePosition(Color.WHITE), snapshot.whiteRookQueenSideHasMovedBefore, Color.WHITE);
+        restoreRookState(getRookKingSidePosition(Color.BLACK), snapshot.blackRookKingSideHasMovedBefore, Color.BLACK);
+        restoreRookState(getRookQueenSidePosition(Color.BLACK), snapshot.blackRookQueenSideHasMovedBefore, Color.BLACK);
     }
 
     private void restoreRookState(Position pos, boolean hasMovedBefore, Color color) {
@@ -608,18 +844,6 @@ public class Board {
                 rook.resetMoved();
             }
         }
-    }
-
-    private King findKing(Color color) {
-        for (int row = 0; row < BOARD_SIZE; row++) {
-            for (int col = 0; col < BOARD_SIZE; col++) {
-                Piece piece = grid[row][col];
-                if (piece instanceof King && piece.getColor() == color) {
-                    return (King) piece;
-                }
-            }
-        }
-        return null;
     }
 
     private Rook getRookAt(Position pos, Color color) {

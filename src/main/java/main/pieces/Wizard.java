@@ -11,10 +11,7 @@ public class Wizard extends Piece {
     }
 
     public List<Position> getPossibleMoves(Board board) {
-        List<Position> moves = new ArrayList<>();
-        moves.addAll(MoveCalculator.getRookMoves(this, board));
-        moves.addAll(MoveCalculator.getBishopMoves(this, board));
-        return moves;
+        return MoveCalculator.getWizardMoves(this, board);
     }
 
     @Override

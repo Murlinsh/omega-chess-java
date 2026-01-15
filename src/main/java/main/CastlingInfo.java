@@ -1,8 +1,6 @@
 package main;
 
-import main.pieces.King;
-import main.pieces.Piece;
-import main.pieces.Rook;
+import main.pieces.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +25,7 @@ public class CastlingInfo {
         this.isShort = isShort;
     }
 
-    // === ФАБРИЧНЫЕ МЕТОДЫ ДЛЯ КЛАССИЧЕСКИХ ШАХМАТ ===
+    // === ФАБРИЧНЫЕ МЕТОДЫ ДЛЯ КЛАССИЧЕСКИХ ШАХМАТ (8×8) ===
 
     // Белые, короткая рокировка (O-O)
     public static CastlingInfo classicWhiteShort() {
@@ -77,6 +75,56 @@ public class CastlingInfo {
         );
     }
 
+    // === ФАБРИЧНЫЕ МЕТОДЫ ДЛЯ OMEGA ШАХМАТ (10×10) ===
+
+    // Omega: Белые, короткая рокировка (O-O)
+    public static CastlingInfo omegaWhiteShort() {
+        return new CastlingInfo(
+                new Position(0, 5),  // f1 (король в Omega Chess)
+                new Position(0, 7),  // h1 (король после рокировки)
+                new Position(0, 8),  // i1 (ладья)
+                new Position(0, 6),  // g1 (ладья после рокировки)
+                Color.WHITE,
+                true
+        );
+    }
+
+    // Omega: Белые, длинная рокировка (O-O-O)
+    public static CastlingInfo omegaWhiteLong() {
+        return new CastlingInfo(
+                new Position(0, 5),  // f1 (король в Omega Chess)
+                new Position(0, 3),  // d1 (король после рокировки)
+                new Position(0, 1),  // b1 (ладья)
+                new Position(0, 4),  // e1 (ладья после рокировки)
+                Color.WHITE,
+                false
+        );
+    }
+
+    // Omega: Чёрные, короткая рокировка (O-O)
+    public static CastlingInfo omegaBlackShort() {
+        return new CastlingInfo(
+                new Position(9, 5),  // f10 (король в Omega Chess)
+                new Position(9, 7),  // h10 (король после рокировки)
+                new Position(9, 8),  // i10 (ладья)
+                new Position(9, 6),  // g10 (ладья после рокировки)
+                Color.BLACK,
+                true
+        );
+    }
+
+    // Omega: Чёрные, длинная рокировка (O-O-O)
+    public static CastlingInfo omegaBlackLong() {
+        return new CastlingInfo(
+                new Position(9, 5),  // f10 (король в Omega Chess)
+                new Position(9, 3),  // c10 (король после рокировки)
+                new Position(9, 1),  // b10 (ладья)
+                new Position(9, 4),  // d10 (ладья после рокировки)
+                Color.BLACK,
+                false
+        );
+    }
+
     // === ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ===
 
     // Получить клетки между королём и ладьёй (проверка на пустоту)
@@ -110,13 +158,61 @@ public class CastlingInfo {
         return path;
     }
 
-    // Получить все 4 классических варианта
+    // Получить все классические варианты (для обратной совместимости)
     public static List<CastlingInfo> getAllClassic() {
         List<CastlingInfo> all = new ArrayList<>();
         all.add(classicWhiteShort());
         all.add(classicWhiteLong());
         all.add(classicBlackShort());
         all.add(classicBlackLong());
+        return all;
+    }
+
+    // Получить все Omega варианты
+    public static List<CastlingInfo> getAllOmega() {
+        List<CastlingInfo> all = new ArrayList<>();
+        all.add(omegaWhiteShort());
+        all.add(omegaWhiteLong());
+        all.add(omegaBlackShort());
+        all.add(omegaBlackLong());
+        return all;
+    }
+
+    // Получить все рокировки для типа игры и цвета
+    public static List<CastlingInfo> getAllForGameType(GameType gameType, Color color) {
+        List<CastlingInfo> all = new ArrayList<>();
+
+        if (gameType == GameType.CLASSIC) {
+            if (color == Color.WHITE) {
+                all.add(classicWhiteShort());
+                all.add(classicWhiteLong());
+            } else {
+                all.add(classicBlackShort());
+                all.add(classicBlackLong());
+            }
+        } else { // OMEGA
+            if (color == Color.WHITE) {
+                all.add(omegaWhiteShort());
+                all.add(omegaWhiteLong());
+            } else {
+                all.add(omegaBlackShort());
+                all.add(omegaBlackLong());
+            }
+        }
+
+        return all;
+    }
+
+    // Получить все возможные рокировки для типа игры
+    public static List<CastlingInfo> getAllForGameType(GameType gameType) {
+        List<CastlingInfo> all = new ArrayList<>();
+
+        if (gameType == GameType.CLASSIC) {
+            all.addAll(getAllClassic());
+        } else { // OMEGA
+            all.addAll(getAllOmega());
+        }
+
         return all;
     }
 
@@ -161,9 +257,32 @@ public class CastlingInfo {
     // Для отладки
     @Override
     public String toString() {
-        return (color == Color.WHITE ? "Белые" : "Чёрные") +
-                (isShort ? " O-O" : " O-O-O") +
-                " (Король: " + kingFrom + "→" + kingTo +
-                ", Ладья: " + rookFrom + "→" + rookTo + ")";
+        String colorStr = (color == Color.WHITE ? "Белые" : "Чёрные");
+        String typeStr = (isShort ? "O-O" : "O-O-O");
+        return String.format("%s %s (Король: %s→%s, Ладья: %s→%s)",
+                colorStr, typeStr, kingFrom, kingTo, rookFrom, rookTo);
+    }
+
+    // === ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ ДЛЯ ОТЛАДКИ ===
+
+    // Получить краткое описание рокировки
+    public String getNotation() {
+        if (isShort) {
+            return "O-O";
+        } else {
+            return "O-O-O";
+        }
+    }
+
+    // Получить тип игры, для которой предназначена эта рокировка
+    public GameType getGameType() {
+        int boardSize = Math.max(kingFrom.getRow(), rookFrom.getRow()) + 1;
+        if (boardSize == 8) {
+            return GameType.CLASSIC;
+        } else if (boardSize == 10) {
+            return GameType.OMEGA;
+        } else {
+            throw new IllegalStateException("Неизвестный размер доски: " + boardSize);
+        }
     }
 }

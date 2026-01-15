@@ -24,6 +24,10 @@ public class Game {
         this.enPassantTarget = null;
         this.moveCount = 0;
         this.board.initializePieces();
+        // !!!! ОТЛАДКА !!!!
+        if (gameType == GameType.OMEGA) {
+            this.board.debugPrintOmegaSetup();
+        }
     }
 
     private Piece createPiece(Class<? extends Piece> pieceType, Color color, Position pos) {
@@ -34,10 +38,10 @@ public class Game {
         if (pieceType == King.class) return new King(color, pos);
         if (pieceType == Pawn.class) return new Pawn(color, pos);
 
-        // Для OMEGA-шахмат:
+        // ДЛЯ OMEGA-ШАХМАТ:
         if (gameType == GameType.OMEGA) {
-            // if (pieceType == Champion.class) return new Champion(color, pos);
-            // if (pieceType == Wizard.class) return new Wizard(color, pos);
+            if (pieceType == Champion.class) return new Champion(color, pos);
+            if (pieceType == Wizard.class) return new Wizard(color, pos);
         }
 
         throw new IllegalArgumentException("Unknown piece type: " + pieceType);
@@ -261,11 +265,13 @@ public class Game {
             return false;
         }
 
-        Position rookPos = kingSide ?
-                (color == Color.WHITE ? new Position(0, 7) : new Position(7, 7)) :
-                (color == Color.WHITE ? new Position(0, 0) : new Position(7, 0));
+        int boardSize = gameType.getBoardSize();
+        int firstRow = (color == Color.WHITE) ? 0 : (boardSize - 1);
+        int rookCol = kingSide ? (boardSize - 1) : 0;
 
+        Position rookPos = new Position(firstRow, rookCol);
         Piece rook = board.getPieceAt(rookPos);
+
         if (!(rook instanceof Rook) || ((Rook) rook).hasMoved()) {
             return false;
         }

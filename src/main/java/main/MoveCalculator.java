@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MoveCalculator {
-    // Убрали статическое поле BOARD_SIZE, будем получать размер доски из GameType
-
     private static boolean processMove(Piece piece, Board board,
                                        List<Position> moves, int row, int col) {
         Position pos = new Position(row, col);
@@ -200,12 +198,11 @@ public class MoveCalculator {
         // 1. Добавить обычные ходы
         allMoves.addAll(getKingMoves(king, board));
 
-        // 2. Добавить рокировки (только для классических)
-        if (board.getGame().getGameType() == GameType.CLASSIC) {
-            List<CastlingInfo> possibleCastlings = getPossibleCastlings(king, board);
-            for (CastlingInfo castling : possibleCastlings) {
-                allMoves.add(castling.kingTo);
-            }
+        // 2. Добавить рокировки (для КАЖДОГО типа игры)
+        // УБРАТЬ ограничение только для CLASSIC
+        List<CastlingInfo> possibleCastlings = getPossibleCastlings(king, board);
+        for (CastlingInfo castling : possibleCastlings) {
+            allMoves.add(castling.kingTo);
         }
 
         return allMoves;
@@ -214,17 +211,12 @@ public class MoveCalculator {
     public static List<CastlingInfo> getPossibleCastlings(King king, Board board) {
         List<CastlingInfo> moves = new ArrayList<>();
 
-        // Рокировки только для классических шахмат
-        if (board.getGame().getGameType() != GameType.CLASSIC) {
-            return moves;
-        }
+        // Получаем рокировки в зависимости от типа игры
+        GameType gameType = board.getGame().getGameType();
+        List<CastlingInfo> allCastlings = CastlingInfo.getAllForGameType(gameType, king.getColor());
 
-        // Получаем ВСЕ классические рокировки
-        List<CastlingInfo> allClassic = CastlingInfo.getAllClassic();
-
-        // Фильтруем по цвету короля и проверяем валидность
-        for (CastlingInfo castling : allClassic) {
-            if (castling.color == king.getColor() && castling.isValid(board)) {
+        for (CastlingInfo castling : allCastlings) {
+            if (castling.isValid(board)) {
                 moves.add(castling);
             }
         }
@@ -276,110 +268,58 @@ public class MoveCalculator {
         int rowNow = piece.getPosition().getRow();
         int colNow = piece.getPosition().getCol();
         GameType gameType = board.getGame().getGameType();
-        int boardSize = gameType.getBoardSize();
 
-        // 1. Ходы как у слона (диагонали)
-        // Вверх-вправо
-        for (int step = 1; ; step++) {
-            int newRow = rowNow + step;
-            int newCol = colNow + step;
-            Position pos = new Position(newRow, newCol);
-
-            if (!pos.isValid(gameType)) break;
-            Piece target = board.getPieceAt(pos);
-
-            if (target == null) {
-                moves.add(pos);
-            } else if (piece.isOpponent(target)) {
-                moves.add(pos);
-                break;
-            } else {
-                break;
-            }
-        }
-
-        // Вверх-влево
-        for (int step = 1; ; step++) {
-            int newRow = rowNow + step;
-            int newCol = colNow - step;
-            Position pos = new Position(newRow, newCol);
-
-            if (!pos.isValid(gameType)) break;
-            Piece target = board.getPieceAt(pos);
-
-            if (target == null) {
-                moves.add(pos);
-            } else if (piece.isOpponent(target)) {
-                moves.add(pos);
-                break;
-            } else {
-                break;
-            }
-        }
-
-        // Вниз-вправо
-        for (int step = 1; ; step++) {
-            int newRow = rowNow - step;
-            int newCol = colNow + step;
-            Position pos = new Position(newRow, newCol);
-
-            if (!pos.isValid(gameType)) break;
-            Piece target = board.getPieceAt(pos);
-
-            if (target == null) {
-                moves.add(pos);
-            } else if (piece.isOpponent(target)) {
-                moves.add(pos);
-                break;
-            } else {
-                break;
-            }
-        }
-
-        // Вниз-влево
-        for (int step = 1; ; step++) {
-            int newRow = rowNow - step;
-            int newCol = colNow - step;
-            Position pos = new Position(newRow, newCol);
-
-            if (!pos.isValid(gameType)) break;
-            Piece target = board.getPieceAt(pos);
-
-            if (target == null) {
-                moves.add(pos);
-            } else if (piece.isOpponent(target)) {
-                moves.add(pos);
-                break;
-            } else {
-                break;
-            }
-        }
-
-        // 2. Прыжки на 2 клетки (без перепрыгивания фигур)
-        int[][] jumpOffsets = {
-                {2, 0},  // Вверх 2
-                {-2, 0}, // Вниз 2
-                {0, 2},  // Вправо 2
-                {0, -2}  // Влево 2
+        // 1. Ход на одну клетку по диагонали (как король, но только по диагонали)
+        int[][] diagonalOffsets = {
+                {-1, -1}, {-1, 1},  // влево-вниз, вправо-вниз
+                {1, -1}, {1, 1}      // влево-вверх, вправо-вверх
         };
 
-        for (int[] offset : jumpOffsets) {
+        for (int[] offset : diagonalOffsets) {
             int newRow = rowNow + offset[0];
             int newCol = colNow + offset[1];
             Position pos = new Position(newRow, newCol);
 
-            if (pos.isValid(gameType)) {
-                // Проверяем, что промежуточная клетка пуста
-                int midRow = rowNow + offset[0]/2;
-                int midCol = colNow + offset[1]/2;
-                Position midPos = new Position(midRow, midCol);
+            if (!pos.isValid(gameType)) {
+                continue;
+            }
 
-                if (midPos.isValid(gameType) && board.getPieceAt(midPos) == null) {
-                    Piece target = board.getPieceAt(pos);
-                    if (target == null || piece.isOpponent(target)) {
-                        moves.add(pos);
-                    }
-                }
+            Piece target = board.getPieceAt(pos);
+            if (target == null || piece.isOpponent(target)) {
+                moves.add(pos);
+            }
+        }
+
+        // 2. Прыжки на {1,3} или {3,1} в любом направлении
+        // Все возможные комбинации {1,3} и {3,1}:
+        int[][] wizardJumps = {
+                // {1,3} комбинации
+                {1, 3}, {1, -3}, {-1, 3}, {-1, -3},
+                {3, 1}, {3, -1}, {-3, 1}, {-3, -1},
+                // {3,1} комбинации (уже включены выше, но для ясности)
+        };
+
+        for (int[] jump : wizardJumps) {
+            int newRow = rowNow + jump[0];
+            int newCol = colNow + jump[1];
+            Position pos = new Position(newRow, newCol);
+
+            if (!pos.isValid(gameType)) {
+                continue;
+            }
+
+            // Проверяем, что Wizard остаётся на клетках того же цвета
+            // Wizard привязан к цвету клеток: если начал на чёрной, остаётся на чёрных
+            boolean isStartingLightSquare = Board.isLightSquare(piece.getPosition());
+            boolean isTargetLightSquare = Board.isLightSquare(pos);
+
+            if (isStartingLightSquare != isTargetLightSquare) {
+                continue; // Не может сменить цвет клетки
+            }
+
+            Piece target = board.getPieceAt(pos);
+            if (target == null || piece.isOpponent(target)) {
+                moves.add(pos);
             }
         }
 
